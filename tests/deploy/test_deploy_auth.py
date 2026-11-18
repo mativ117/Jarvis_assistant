@@ -28,6 +28,30 @@ def test_docker_compose_requires_api_key():
     assert "OPENJARVIS_API_KEY:?" in text
 
 
+
+# Jarvis Assistant: guard the personal deployment's host-port defaults.
+def test_docker_compose_publishes_only_jarvis_loopback():
+    import yaml
+
+    config = yaml.safe_load(_read("docker/docker-compose.yml"))
+    assert config["services"]["jarvis"]["ports"] == ["127.0.0.1:8000:8000"]
+    assert not config["services"]["ollama"].get("ports")
+    assert "OLLAMA_HOST=http://ollama:11434" in config["services"]["jarvis"]["environment"]
+
+
+@pytest.mark.parametrize(
+    "override",
+    ["docker-compose.gpu.nvidia.yml", "docker-compose.gpu.rocm.yml"],
+)
+def test_docker_gpu_overrides_do_not_publish_more_ports(override):
+    import yaml
+
+    config = yaml.safe_load(_read(f"docker/{override}"))
+    for service in config["services"].values():
+        assert not service.get("ports")
+        assert service.get("network_mode") != "host"
+
+
 def test_docker_env_example_present():
     assert (DEPLOY / "docker" / ".env.example").is_file()
     assert "OPENJARVIS_API_KEY" in _read("docker/.env.example")
