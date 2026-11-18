@@ -21,6 +21,8 @@ Scope: this repository. Jarvis Assistant is an independent fork of [OpenJarvis](
 - Do not weaken security rules or suppress scanner findings simply to make CI green.
 
 ## Change acceptance gates
+Context capture must pass [Privacy Shield](docs/jarvis-assistant/PRIVACY_SHIELD.md) before release. No raw screen or derived sensitive content may leave its isolated capture boundary; unknown sources fail closed. No claim of absolute confidentiality.
+
 For each change, record scope, risk, review evidence, tests actually executed and results, remaining limitations, rollback plan and owner approval where needed. Use unit, integration, end-to-end, security and performance tests proportionate to risk. A missing or failed mandatory check blocks release. Documentation or static review is not evidence of runtime safety. Do not claim malware-free status.
 
 Current status and release gates: see [Foundation audit](docs/jarvis-assistant/FOUNDATION.md).

@@ -24,6 +24,8 @@ Keep the capture agent, UI, models, telemetry pipeline and memory separate; use 
 - Gaming: see [GAMING_HUB.md](GAMING_HUB.md). Use official permitted data, no anti-cheat evasion.
 
 ## Security and privacy gates
+[Privacy Shield](PRIVACY_SHIELD.md) defines mandatory stricter capture and data-flow gates and takes precedence for Context.
+
 Off by default; allowlist sources, user-visible capture status, one-step stop, bounded sessions and default ephemeral processing. Never capture password/sensitive windows intentionally, and warn that automatic redaction is imperfect. No capture of work/client or third-party confidential data absent authorization. No background microphone by default; no automatic clipboard monitoring. No automatic tool execution, messages, purchases or changes from observed content. Enforce model/tool/network boundaries in deterministic code; reject malicious instructions embedded in screens or files. No secret or sensitive data in logs, repository, analytics or default notifications. Authenticate clients, support revocation and minimize shared data. Test permission denial, cancellation, leakage, malicious content, replay, staleness, battery/RAM/CPU and accessibility.
 
 ## Discovery sequence

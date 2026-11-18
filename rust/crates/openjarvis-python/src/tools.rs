@@ -133,6 +133,10 @@ impl PyShellExecTool {
         let result = tool
             .execute(&params)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+        // Jarvis Assistant: propagate the native tool's denial as an error.
+        if !result.success {
+            return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(result.content));
+        }
         Ok(result.content)
     }
 }

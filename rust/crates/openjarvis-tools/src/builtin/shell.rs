@@ -1,15 +1,14 @@
-//! Shell execution tool.
+//! Host shell tool: fail-closed compatibility stub (Jarvis Assistant).
 
 use crate::traits::BaseTool;
 use openjarvis_core::{OpenJarvisError, ToolResult, ToolSpec};
 use once_cell::sync::Lazy;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::process::Command;
 
 static SPEC: Lazy<ToolSpec> = Lazy::new(|| ToolSpec {
     name: "shell_exec".into(),
-    description: "Execute a shell command and return its output".into(),
+    description: "Host shell execution is disabled in Jarvis Assistant.".into(),
     parameters: serde_json::json!({
         "type": "object",
         "properties": {
@@ -36,44 +35,28 @@ impl BaseTool for ShellExecTool {
     fn spec(&self) -> &ToolSpec {
         &SPEC
     }
-    fn execute(&self, params: &Value) -> Result<ToolResult, OpenJarvisError> {
-        let command = params["command"].as_str().unwrap_or("");
-        let cwd = params["cwd"].as_str();
+    fn execute(&self, _params: &Value) -> Result<ToolResult, OpenJarvisError> {
+        // Jarvis Assistant: no process creation or environment access.
+        Ok(ToolResult::failure(
+            "shell_exec",
+            "Host shell execution is disabled in Jarvis Assistant.",
+        ))
+    }
+}
 
-        let mut cmd = if cfg!(target_os = "windows") {
-            let mut c = Command::new("cmd");
-            c.args(["/C", command]);
-            c
-        } else {
-            let mut c = Command::new("sh");
-            c.args(["-c", command]);
-            c
-        };
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-        if let Some(dir) = cwd {
-            cmd.current_dir(dir);
-        }
-
-        match cmd.output() {
-            Ok(output) => {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                let exit_code = output.status.code().unwrap_or(-1);
-
-                let content = format!(
-                    "Exit code: {exit_code}\n--- stdout ---\n{stdout}\n--- stderr ---\n{stderr}"
-                );
-
-                if output.status.success() {
-                    Ok(ToolResult::success("shell_exec", content))
-                } else {
-                    Ok(ToolResult::failure("shell_exec", content))
-                }
-            }
-            Err(e) => Ok(ToolResult::failure(
-                "shell_exec",
-                format!("Failed to execute: {e}"),
-            )),
-        }
+    #[test]
+    fn host_shell_denies_without_echoing_arguments() {
+        let result = ShellExecTool
+            .execute(&serde_json::json!({
+                "command": "SYNTHETIC_SECRET_CANARY",
+                "cwd": "PRIVATE_PATH_CANARY"
+            }))
+            .unwrap();
+        assert!(!result.success);
+        assert_eq!(result.content, "Host shell execution is disabled in Jarvis Assistant.");
     }
 }
