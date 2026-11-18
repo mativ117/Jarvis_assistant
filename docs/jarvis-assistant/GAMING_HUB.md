@@ -2,6 +2,8 @@
 
 Status: reserved for discovery after Foundation and the secure local assistant MVP. Not implemented; game compatibility, permissions and performance are unvalidated.
 
+This module is a domain-specific adapter of [Jarvis Context](CONTEXT_INTERFACE.md), the shared contextual interface for Windows and iPhone. Reuse its consent, presentation, context and security boundaries rather than building a second platform.
+
 ## Goal
 An optional, local-first gaming companion that provides relevant information during play without interfering with the game. A dedicated dashboard/overlay, with a racing engineer as the first candidate.
 
