@@ -12,11 +12,16 @@ on:
       - 'scripts/install/**'
       - 'tests/install/bash/**'
 
+permissions:
+  contents: read
+
 jobs:
   bats:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Install bats-core
         run: |

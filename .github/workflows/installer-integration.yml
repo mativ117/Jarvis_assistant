@@ -1,14 +1,11 @@
 name: Installer integration
 
+# Jarvis Assistant: execute installers only after explicit review.
 on:
-  pull_request:
-    paths:
-      - 'scripts/install/**'
-      - 'src/openjarvis/cli/**'
-      - 'tests/install/**'
-      - '.github/workflows/installer-integration.yml'
-  schedule:
-    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   container-matrix:
@@ -42,6 +39,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           path: openjarvis-src
+          persist-credentials: false
 
       - name: Install Ollama mock
         run: install -m 755 "$GITHUB_WORKSPACE/openjarvis-src/tests/install/bash/stubs/ollama-mock" /usr/local/bin/ollama
@@ -91,6 +89,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Install Ollama mock
         run: sudo install -m 755 tests/install/bash/stubs/ollama-mock /usr/local/bin/ollama
