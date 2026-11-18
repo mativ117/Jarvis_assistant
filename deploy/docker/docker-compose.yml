@@ -4,7 +4,8 @@ services:
       context: ../..
       dockerfile: deploy/docker/Dockerfile
     ports:
-      - "8000:8000"
+      # Jarvis Assistant: publish only on the host loopback interface.
+      - "127.0.0.1:8000:8000"
     environment:
       - OPENJARVIS_ENGINE_DEFAULT=ollama
       - OLLAMA_HOST=http://ollama:11434
@@ -21,8 +22,8 @@ services:
     # Pinned to a fixed version + digest for reproducible deployments and
     # predictable rollbacks (#563). Bump deliberately, not implicitly via :latest.
     image: ollama/ollama:0.30.10@sha256:bfc9c6d53cc6989aa5131a6fde6b162b2802d4d337657f3253b5f69579bddeee
-    ports:
-      - "11434:11434"
+    # Jarvis Assistant: Ollama is reachable by service name on the Compose
+    # network. Do not publish its unauthenticated API on the host.
     volumes:
       - ollama-models:/root/.ollama
     healthcheck:
