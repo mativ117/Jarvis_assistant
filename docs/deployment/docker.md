@@ -1,5 +1,7 @@
 # Docker Deployment
 
+> Jarvis Assistant fork: host ports are restricted to loopback, and the Ollama API remains on the Compose network. These inherited deployment instructions are not approved for installation until the Foundation security gates pass.
+
 OpenJarvis provides Docker images for both CPU-only and GPU-accelerated deployments, along with a Docker Compose configuration that bundles the API server with an Ollama inference backend.
 
 ## Quick Start
@@ -29,8 +31,8 @@ This brings up two services:
 
 | Service  | Port  | Description                        |
 |----------|-------|------------------------------------|
-| `jarvis` | 8000  | OpenJarvis API server              |
-| `ollama` | 11434 | Ollama inference engine            |
+| `jarvis` | 8000  | API server (host loopback only)     |
+| `ollama` | 11434 | Inference engine (Compose network only) |
 
 Verify the server is running:
 
@@ -165,7 +167,7 @@ docker build -f Dockerfile.gpu -t openjarvis:gpu .
 Run with GPU access (requires the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)):
 
 ```bash
-docker run -d --gpus all -p 8000:8000 openjarvis:gpu
+docker run -d --gpus all -e OPENJARVIS_API_KEY -p 127.0.0.1:8000:8000 openjarvis:gpu
 ```
 
 !!! note "NVIDIA Container Toolkit required"
@@ -184,9 +186,10 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       - OPENJARVIS_ENGINE_DEFAULT=ollama
+      - OPENJARVIS_API_KEY=${OPENJARVIS_API_KEY:?Set OPENJARVIS_API_KEY first}
       - OPENJARVIS_OLLAMA_HOST=http://ollama:11434
     depends_on:
       - ollama
@@ -194,8 +197,7 @@ services:
 
   ollama:
     image: ollama/ollama
-    ports:
-      - "11434:11434"
+    # No host port: Jarvis connects via the internal Compose service name.
     volumes:
       - ollama-models:/root/.ollama
     restart: unless-stopped
@@ -234,11 +236,12 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - ./my-config.toml:/root/.openjarvis/config.toml:ro
     environment:
       - OPENJARVIS_ENGINE_DEFAULT=ollama
+      - OPENJARVIS_API_KEY=${OPENJARVIS_API_KEY:?Set OPENJARVIS_API_KEY first}
       - OPENJARVIS_OLLAMA_HOST=http://ollama:11434
     depends_on:
       - ollama
@@ -279,7 +282,7 @@ services:
       context: .
       dockerfile: Dockerfile.gpu
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     deploy:
       resources:
         reservations:
@@ -289,6 +292,7 @@ services:
               capabilities: [gpu]
     environment:
       - OPENJARVIS_ENGINE_DEFAULT=ollama
+      - OPENJARVIS_API_KEY=${OPENJARVIS_API_KEY:?Set OPENJARVIS_API_KEY first}
       - OPENJARVIS_OLLAMA_HOST=http://ollama:11434
     depends_on:
       - ollama
@@ -345,7 +349,7 @@ RUN pip install --no-cache-dir uv && \
 The entrypoint is `jarvis` and the default command is `serve --host 0.0.0.0 --port 8000`. Override the command to change server options:
 
 ```bash
-docker run -d -p 9000:9000 openjarvis:latest \
+docker run -d -e OPENJARVIS_API_KEY -p 127.0.0.1:9000:9000 openjarvis:latest \
   serve --host 0.0.0.0 --port 9000 --engine ollama --model qwen3:8b
 ```
 
@@ -357,7 +361,9 @@ services:
     build: .
     command: ["serve", "--host", "0.0.0.0", "--port", "9000", "--model", "qwen3:8b"]
     ports:
-      - "9000:9000"
+      - "127.0.0.1:9000:9000"
+    environment:
+      - OPENJARVIS_API_KEY=${OPENJARVIS_API_KEY:?Set OPENJARVIS_API_KEY first}
 ```
 
 ### Available CLI Options for `jarvis serve`
