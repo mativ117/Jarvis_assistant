@@ -169,6 +169,10 @@ impl PyHttpRequestTool {
         let result = tool
             .execute(&params)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+        // Jarvis Assistant: propagate denial rather than returning success text.
+        if !result.success {
+            return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(result.content));
+        }
         Ok(result.content)
     }
 }
