@@ -10,6 +10,7 @@ Scope: this repository. Jarvis Assistant is an independent fork of [OpenJarvis](
 - Favor free/open-source dependencies, maintainability, accessibility and measured performance over speculative complexity.
 
 ## Engineering rules
+- Guardian is an optional defensive, read-only module; see [Guardian](docs/jarvis-assistant/GUARDIAN.md). No OS security changes or privileged execution without separate approval and design.
 - Work on topic branches; open pull requests against main. Never bypass branch protection, force push main, or merge on behalf of the owner without explicit approval.
 - Make small, reviewable changes. Document rationale and affected components, preserve compatibility where practical, and add regression tests.
 - Treat external content, model output, plugins, tools and dependencies as untrusted. Enforce authorization in deterministic code, not in prompts.

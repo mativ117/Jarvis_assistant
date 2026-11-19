@@ -1,16 +1,14 @@
-//! File read/write tools.
+//! Disabled direct host file tools (Jarvis Assistant).
 
 use crate::traits::BaseTool;
 use openjarvis_core::{OpenJarvisError, ToolResult, ToolSpec};
-use openjarvis_security::file_policy::is_sensitive_file;
 use once_cell::sync::Lazy;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::path::Path;
 
 static READ_SPEC: Lazy<ToolSpec> = Lazy::new(|| ToolSpec {
     name: "file_read".into(),
-    description: "Read the contents of a file".into(),
+    description: "Direct host file access is disabled in Jarvis Assistant.".into(),
     parameters: serde_json::json!({
         "type": "object",
         "properties": {
@@ -29,7 +27,7 @@ static READ_SPEC: Lazy<ToolSpec> = Lazy::new(|| ToolSpec {
 
 static WRITE_SPEC: Lazy<ToolSpec> = Lazy::new(|| ToolSpec {
     name: "file_write".into(),
-    description: "Write content to a file".into(),
+    description: "Direct host file access is disabled in Jarvis Assistant.".into(),
     parameters: serde_json::json!({
         "type": "object",
         "properties": {
@@ -56,24 +54,11 @@ impl BaseTool for FileReadTool {
     fn spec(&self) -> &ToolSpec {
         &READ_SPEC
     }
-    fn execute(&self, params: &Value) -> Result<ToolResult, OpenJarvisError> {
-        let path_str = params["path"].as_str().unwrap_or("");
-        let path = Path::new(path_str);
-
-        if is_sensitive_file(path) {
-            return Ok(ToolResult::failure(
-                "file_read",
-                format!("Access denied: '{path_str}' is a sensitive file"),
-            ));
-        }
-
-        match std::fs::read_to_string(path) {
-            Ok(content) => Ok(ToolResult::success("file_read", content)),
-            Err(e) => Ok(ToolResult::failure(
-                "file_read",
-                format!("Error reading '{path_str}': {e}"),
-            )),
-        }
+    fn execute(&self, _params: &Value) -> Result<ToolResult, OpenJarvisError> {
+        Ok(ToolResult::failure(
+            "file_read",
+            "Direct host file access is disabled in Jarvis Assistant.",
+        ))
     }
 }
 
@@ -86,39 +71,11 @@ impl BaseTool for FileWriteTool {
     fn spec(&self) -> &ToolSpec {
         &WRITE_SPEC
     }
-    fn execute(&self, params: &Value) -> Result<ToolResult, OpenJarvisError> {
-        let path_str = params["path"].as_str().unwrap_or("");
-        let content = params["content"].as_str().unwrap_or("");
-        let path = Path::new(path_str);
-
-        if is_sensitive_file(path) {
-            return Ok(ToolResult::failure(
-                "file_write",
-                format!("Access denied: '{path_str}' is a sensitive file"),
-            ));
-        }
-
-        if let Some(parent) = path.parent() {
-            if !parent.exists() {
-                if let Err(e) = std::fs::create_dir_all(parent) {
-                    return Ok(ToolResult::failure(
-                        "file_write",
-                        format!("Error creating directory: {e}"),
-                    ));
-                }
-            }
-        }
-
-        match std::fs::write(path, content) {
-            Ok(()) => Ok(ToolResult::success(
-                "file_write",
-                format!("Written {} bytes to {}", content.len(), path_str),
-            )),
-            Err(e) => Ok(ToolResult::failure(
-                "file_write",
-                format!("Error writing '{path_str}': {e}"),
-            )),
-        }
+    fn execute(&self, _params: &Value) -> Result<ToolResult, OpenJarvisError> {
+        Ok(ToolResult::failure(
+            "file_write",
+            "Direct host file access is disabled in Jarvis Assistant.",
+        ))
     }
 }
 
@@ -127,21 +84,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_file_read_sensitive_blocked() {
-        let tool = FileReadTool;
-        let result = tool
-            .execute(&serde_json::json!({"path": ".env"}))
-            .unwrap();
-        assert!(!result.success);
-        assert!(result.content.contains("sensitive"));
-    }
-
-    #[test]
-    fn test_file_write_sensitive_blocked() {
-        let tool = FileWriteTool;
-        let result = tool
-            .execute(&serde_json::json!({"path": "id_rsa", "content": "secret"}))
-            .unwrap();
-        assert!(!result.success);
+    fn direct_file_tools_deny_without_echoing_inputs() {
+        let params = serde_json::json!({"path": "PRIVATE_PATH_CANARY", "content": "SECRET_CANARY"});
+        for result in [FileReadTool.execute(&params), FileWriteTool.execute(&params)] {
+            let result = result.unwrap();
+            assert!(!result.success);
+            assert_eq!(result.content, "Direct host file access is disabled in Jarvis Assistant.");
+        }
     }
 }

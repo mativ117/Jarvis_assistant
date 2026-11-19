@@ -89,6 +89,10 @@ impl PyFileReadTool {
         let result = tool
             .execute(&params)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+        // Jarvis Assistant: return a failure for a denied native operation.
+        if !result.success {
+            return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(result.content));
+        }
         Ok(result.content)
     }
 }
@@ -109,6 +113,10 @@ impl PyFileWriteTool {
         let result = tool
             .execute(&params)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+        // Jarvis Assistant: return a failure for a denied native operation.
+        if !result.success {
+            return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(result.content));
+        }
         Ok(result.content)
     }
 }
