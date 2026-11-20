@@ -6,7 +6,7 @@
 
 ## 1. Executive summary
 
-Jarvis Assistant is an independent Apache-2.0 fork of OpenJarvis. This work establishes product direction, documents a threat model and disables several high-risk direct tool surfaces on a topic branch. The branch is **16 commits ahead of protected main**, touching **50 files** (including archived workflows), as verified by GitHub compare. No project installation or deployment is evidenced. Do not confuse documented protections with a verified working security perimeter.
+Jarvis Assistant is an independent Apache-2.0 fork of OpenJarvis. This work establishes product direction, documents a threat model and disables several high-risk direct tool surfaces on a topic branch. At the pre-report code-audit checkpoint, the branch was **16 commits ahead of protected main**, touching **50 files** (including archived workflows), as verified by GitHub compare. This report adds another documentation commit. No project installation or deployment is evidenced. Do not confuse documented protections with a verified working security perimeter.
 
 The user's request to complete all project phases cannot be represented as accomplished: the source inventory is large, the full Python lockfile and repository checkout could not be obtained in the execution environment, Rust/Docker/Windows runtime tests are unavailable, and the product modules themselves are not built. This report distinguishes delivered code, standalone tests, static observations and outstanding gates.
 
