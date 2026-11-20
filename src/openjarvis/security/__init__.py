@@ -73,22 +73,7 @@ def setup_security(
                 policy_path=config.security.capabilities.policy_path or None,
                 default_deny=config.security.capabilities.default_deny,
             )
-            # No explicit policy file: grant a conservative baseline to the
-            # "_default" wildcard agent so default-deny doesn't silently
-            # break every managed agent (whose UUIDs aren't known ahead of
-            # time). Read/fetch/memory only — writes, code execution, and
-            # admin tools require an explicit per-agent grant.
-            if (
-                config.security.capabilities.default_deny
-                and not config.security.capabilities.policy_path
-            ):
-                for cap in (
-                    "file:read",
-                    "network:fetch",
-                    "memory:read",
-                    "memory:write",
-                ):
-                    cap_policy.grant("_default", cap)
+            # Jarvis Assistant: never grant ambient privileges to unknown agents.
         except Exception as exc:
             # Explicitly enabled enforcement is a contract in every profile.
             # Missing native support or an invalid policy must not produce an

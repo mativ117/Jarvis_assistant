@@ -250,6 +250,15 @@ class ToolExecutor:
 
     def execute(self, tool_call: ToolCall) -> ToolResult:
         """Parse arguments, dispatch to tool, measure latency, emit events."""
+        # Jarvis Assistant: admission precedes parsing, logs, policy and IO.
+        from openjarvis.security.foundation_policy import DENIAL_MESSAGE, FOUNDATION_POLICY
+
+        if not FOUNDATION_POLICY.permits(self._agent_id, "tool:invoke", tool_call.name):
+            return ToolResult(
+                tool_name="blocked_tool",
+                content=DENIAL_MESSAGE,
+                success=False,
+            )
         tool = self._tools.get(tool_call.name)
         if tool is None:
             return ToolResult(
@@ -588,11 +597,21 @@ class ToolExecutor:
 
     def available_tools(self) -> List[ToolSpec]:
         """Return specs for all available tools."""
-        return [t.spec for t in self._tools.values()]
+        from openjarvis.security.foundation_policy import FOUNDATION_POLICY
+
+        return [
+            t.spec for name, t in self._tools.items()
+            if FOUNDATION_POLICY.permits(self._agent_id, "tool:invoke", name)
+        ]
 
     def get_openai_tools(self) -> List[Dict[str, Any]]:
         """Return tools in OpenAI function-calling format."""
-        return [t.to_openai_function() for t in self._tools.values()]
+        from openjarvis.security.foundation_policy import FOUNDATION_POLICY
+
+        return [
+            t.to_openai_function() for name, t in self._tools.items()
+            if FOUNDATION_POLICY.permits(self._agent_id, "tool:invoke", name)
+        ]
 
 
 def build_tool_descriptions(

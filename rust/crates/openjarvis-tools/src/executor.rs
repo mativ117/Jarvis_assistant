@@ -11,6 +11,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
+// Jarvis Assistant: no native tool is approved during Foundation.
+const FOUNDATION_APPROVED_TOOLS: &[&str] = &[];
+
 pub struct ToolExecutor {
     tools: HashMap<String, BuiltinTool>,
     capability_policy: Option<CapabilityPolicy>,
@@ -41,11 +44,11 @@ impl ToolExecutor {
     }
 
     pub fn list_tools(&self) -> Vec<String> {
-        self.tools.keys().cloned().collect()
+        self.tools.keys().filter(|name| FOUNDATION_APPROVED_TOOLS.contains(&name.as_str())).cloned().collect()
     }
 
     pub fn tool_specs(&self) -> Vec<Value> {
-        self.tools.values().map(|t| t.to_openai_function()).collect()
+        self.tools.values().filter(|tool| FOUNDATION_APPROVED_TOOLS.contains(&tool.tool_id())).map(|t| t.to_openai_function()).collect()
     }
 
     pub fn execute(
@@ -55,6 +58,13 @@ impl ToolExecutor {
         agent_id: Option<&str>,
         taint: Option<&TaintSet>,
     ) -> Result<ToolResult, OpenJarvisError> {
+        // Deny before using caller-supplied arguments or emitting events.
+        if !FOUNDATION_APPROVED_TOOLS.contains(&tool_name) {
+            return Ok(ToolResult::failure(
+                "blocked_tool",
+                "Tool execution is disabled pending Jarvis Foundation validation.",
+            ));
+        }
         let tool = self.tools.get(tool_name).ok_or_else(|| {
             OpenJarvisError::Tool(ToolError::NotFound(tool_name.to_string()))
         })?;
@@ -127,21 +137,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_executor_register_and_execute() {
+    fn foundation_denies_registered_and_unknown_tools() {
         let mut exec = ToolExecutor::new(None, None);
         exec.register(BuiltinTool::Calculator(crate::builtin::calculator::CalculatorTool));
-        let result = exec
-            .execute("calculator", &serde_json::json!({"expression": "2+2"}), None, None)
-            .unwrap();
-        assert!(result.success);
-    }
-
-    #[test]
-    fn test_executor_tool_not_found() {
-        let exec = ToolExecutor::new(None, None);
-        let err = exec
-            .execute("nonexistent", &serde_json::json!({}), None, None)
-            .unwrap_err();
-        assert!(matches!(err, OpenJarvisError::Tool(ToolError::NotFound(_))));
+        assert!(exec.list_tools().is_empty());
+        assert!(exec.tool_specs().is_empty());
+        for name in ["calculator", "nonexistent"] {
+            let result = exec
+                .execute(name, &serde_json::json!({"expression": "PRIVATE_CANARY"}), None, None)
+                .unwrap();
+            assert!(!result.success);
+            assert_eq!(result.tool_name, "blocked_tool");
+            assert!(!result.content.contains("PRIVATE_CANARY"));
+        }
     }
 }

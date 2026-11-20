@@ -1423,9 +1423,9 @@ class ChannelConfig:
 class CapabilitiesConfig:
     """RBAC capability system settings."""
 
-    enabled: bool = False
+    enabled: bool = True
     policy_path: str = ""
-    default_deny: bool = False
+    default_deny: bool = True
 
 
 @dataclass(slots=True)
